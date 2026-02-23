@@ -38,4 +38,4 @@ Check the comments in `scripts/03-dotfiles.sh` and `scripts/04-private-setup.sh`
 
 ## Notes
 
-Fork it, customize it. Built for my workflow but should work for yours too.
+I built this for myself but it's meant to serve as inspiration for others. When teaching folks about shell scripting, I usually use a macOS setup as a beginniner example for why shell scripts might be useful in a practical sense. Fork it, customize it. This is built for my workflow but feel free to use it as a jumping off point for yours. Or not.
