@@ -45,6 +45,3 @@ your-private-config/
 
 Then update `PRIVATE_REPO_URL` in `bootstrap.sh`. Check the comments in the scripts for details.
 
-## Notes
-
-I built this for myself but it's meant to serve as inspiration for others. When teaching folks about shell scripting, I usually use a macOS setup as a beginniner example for why shell scripts might be useful in a practical sense. Fork it, customize it. This is built for my workflow but feel free to use it as a jumping off point for yours. Or not.
