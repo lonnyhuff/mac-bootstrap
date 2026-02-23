@@ -8,13 +8,22 @@
 # - Scripts have access to: $HOME, $PRIVATE_CONFIG_DIR, and `op` command (1Password CLI)
 #
 # Example script (01-gam-setup.sh):
-#   OP_ITEM_ID="your-item-id"
-#   OP_VAULT="your-vault"
+#   OP_ITEM_ID="your-item-id-here"           # This is fine to commit to git
+#   OP_VAULT="your-vault-name"                # So is this
 #   mkdir -p ~/bin/gam7
-#   op document get "$OP_ITEM_ID" --vault "$OP_VAULT" > ~/bin/gam7/oauth2.txt
+#   op document get "$OP_ITEM_ID" --vault "$OP_VAULT" > ~/bin/gam7/oauth2.txt  # This pulls the ACTUAL secret
 #   chmod 600 ~/bin/gam7/oauth2.txt
 #
-# Key: store secrets in 1Password, pull them at setup time, never commit them to git
+# "Wait, you're committing 1Password item IDs to git?"
+# Yes. Item IDs are just pointers. They're useless without:
+#   1. Access to my 1Password account (requires master password + 2FA)
+#   2. The `op` CLI being authenticated (which requires browser auth)
+#
+# This is like committing "my password is in the safe, top drawer, blue folder"
+# without giving you the safe combination. Cool story, still can't get in.
+#
+# The actual secrets (OAuth tokens, API keys, etc.) are PULLED at setup time
+# and never touch git. Not even the private repo.
 
 set -e
 

@@ -4,12 +4,16 @@
 #
 # How it works:
 # - Looks for your-private-config/dotfiles/*
-# - Each file needs a header comment:
+# - Each file needs header comments at the top:
 #     # BOOTSTRAP_DEST: ~/.zshrc
 #     # BOOTSTRAP_BACKUP: true
-#     <your actual file content>
-# - Script reads the headers, copies to destination, strips headers
-# - If no private repo, creates minimal defaults
+#     <your actual file content starts here>
+#
+# - Script reads the headers, copies to destination, strips the headers out
+# - If no private repo, creates minimal defaults (Homebrew path, 1Password SSH agent, basic aliases)
+#
+# Why headers? Because it's easier to manage "where does this file go" in the file itself
+# rather than maintaining a separate mapping. Plus it's self-documenting. You're welcome.
 
 set -e
 

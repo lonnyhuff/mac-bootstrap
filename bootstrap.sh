@@ -144,18 +144,57 @@ else
 fi
 
 # =============================================================================
-# Phase 4: Private Config Repo (Optional)
+# Phase 4: Private Config Repo
 # =============================================================================
+#
+# This is hardcoded to MY private repo. If you're not me, you should:
+# 1. Fork this repo
+# 2. Create your own private config repo
+# 3. Update PRIVATE_REPO_URL below to point to yours
+#
+# "But isn't it insecure to hardcode a private repo URL?"
+# No. The private repo just contains:
+#   - References to 1Password item IDs (not the actual secrets)
+#   - Personal dotfiles and preferences
+#   - Setup scripts that PULL secrets from 1Password at runtime
+#
+# Actual secrets never touch git. Even in the private repo.
+# The private repo is just my personal automation layer.
+#
+# If someone steals your GitHub creds, you have bigger problems than
+# them seeing which 1Password items you reference.
 
 echo ""
 log_info "Phase 4: Private Config Repository"
 echo ""
 
 PRIVATE_CONFIG_DIR="$HOME/.mac-bootstrap-config"
+PRIVATE_REPO_URL="git@github.com:lonnyhuff/the-setup-private.git"
 
-if confirm "Do you have a private mac-bootstrap-config repository?"; then
-    read -p "Enter the git clone URL: " PRIVATE_REPO_URL
-
+# Check if someone is trying to use my private repo (which won't work for them)
+CURRENT_USER=$(whoami)
+if [[ "$CURRENT_USER" != "lonnyhuff" ]] && [[ ! -d "$PRIVATE_CONFIG_DIR" ]]; then
+    log_warn "Hold up! You're trying to use my hardcoded private repo."
+    echo ""
+    echo "That won't work for you because:"
+    echo "  1. It's private (you don't have access)"
+    echo "  2. It contains MY 1Password item IDs (not yours)"
+    echo "  3. It's personalized for MY workflow"
+    echo ""
+    echo "You should:"
+    echo "  1. Fork this repo"
+    echo "  2. Create your own private config repo"
+    echo "  3. Update PRIVATE_REPO_URL in bootstrap.sh"
+    echo ""
+    if confirm "Skip private config and use defaults?"; then
+        export HAS_PRIVATE_CONFIG=false
+        log_info "Skipping private config (using minimal defaults)"
+    else
+        log_error "Exiting. Update PRIVATE_REPO_URL in bootstrap.sh and try again."
+        exit 1
+    fi
+else
+    # Either it's me, or the directory already exists (they set it up manually)
     if [ -d "$PRIVATE_CONFIG_DIR" ]; then
         log_warn "Config directory already exists at $PRIVATE_CONFIG_DIR"
         if confirm "Pull latest changes?"; then
@@ -163,16 +202,18 @@ if confirm "Do you have a private mac-bootstrap-config repository?"; then
             git pull
             log_success "Private config updated"
         fi
+        export HAS_PRIVATE_CONFIG=true
     else
         log_info "Cloning private config repository..."
-        git clone "$PRIVATE_REPO_URL" "$PRIVATE_CONFIG_DIR"
-        log_success "Private config cloned to $PRIVATE_CONFIG_DIR"
+        if git clone "$PRIVATE_REPO_URL" "$PRIVATE_CONFIG_DIR" 2>/dev/null; then
+            log_success "Private config cloned to $PRIVATE_CONFIG_DIR"
+            export HAS_PRIVATE_CONFIG=true
+        else
+            log_warn "Couldn't clone private config (probably don't have access)"
+            log_info "Continuing with minimal defaults..."
+            export HAS_PRIVATE_CONFIG=false
+        fi
     fi
-
-    export HAS_PRIVATE_CONFIG=true
-else
-    log_info "Skipping private config repository"
-    export HAS_PRIVATE_CONFIG=false
 fi
 
 # =============================================================================

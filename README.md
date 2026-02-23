@@ -26,7 +26,16 @@ Script pauses for 1Password configuration, then handles the rest.
 
 ## Private Repo
 
-Expects an optional private repo at runtime. Structure:
+The bootstrap script is hardcoded to pull from my private config repo. If you're not me, it'll warn you and let you skip it (using minimal defaults instead).
+
+The private repo just contains:
+- Dotfiles with my personal preferences
+- References to my 1Password item IDs (not the actual secrets)
+- Setup scripts that pull secrets from 1Password at runtime
+
+No actual secrets touch git. The private repo is just automation glue.
+
+If you fork this, create your own private config repo with this structure:
 
 ```
 your-private-config/
@@ -34,7 +43,7 @@ your-private-config/
 └── scripts/      # Numbered scripts (01-gam-setup.sh, etc.)
 ```
 
-Check the comments in `scripts/03-dotfiles.sh` and `scripts/04-private-setup.sh` for how it works.
+Then update `PRIVATE_REPO_URL` in `bootstrap.sh`. Check the comments in the scripts for details.
 
 ## Notes
 
