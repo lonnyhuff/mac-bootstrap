@@ -83,17 +83,9 @@ The bootstrap script will prompt for your private repo URL and clone it to `~/.m
 
 The bootstrap script runs all numbered scripts in `scripts/` sequentially.
 
-## GAM + 1Password Integration
 
-This bootstrap includes an approach for managing GAM (Google Apps Manager) credentials via 1Password. Instead of leaving OAuth tokens on disk, they're pulled from 1Password during setup and installed with proper permissions.
-
-See [docs/examples/01-gam-setup.sh.example](docs/examples/01-gam-setup.sh.example) for a template to add to your private config repo.
-
-A more sophisticated approach (a wrapper tool that pulls tokens on-demand rather than at setup) is planned as a separate project.
 
 ## Notes
 
 - This is built for my workflow but designed to be forkable
-- Some manual configuration still required (Raycast shortcuts, app sign-ins, etc.)
-- The bootstrap is idempotent—safe to run multiple times if something fails
 - Optimized for Apple Silicon Macs but should work on Intel with minor PATH adjustments
