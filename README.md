@@ -2,7 +2,7 @@
 
 ## Why
 
-I move around computers a lot—testing, breaking things, rebuilding. I keep a minimal setup and admire people who can just hop onto any machine and live in vim and a browser, but I'm particular about my workflow. More importantly, I think about security when moving between systems.
+I move around computers a lot, testing, breaking things, rebuilding. I keep a minimal setup and admire people who can just hop onto any machine and live in vim and a browser, but I'm particular about my workflow. More importantly, I think about security when moving between systems.
 
 Password managers like 1Password make it significantly easier to move around without leaving credentials on disk. If a laptop gets stolen while traveling, it's harder to extract SSH keys, PEM files, or OAuth tokens when they're not sitting in plaintext in `~/.ssh` or `~/bin`. This setup tries to find a balance between portability, security, personal preferences, and speed.
 
