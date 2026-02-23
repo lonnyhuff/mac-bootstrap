@@ -1,0 +1,94 @@
+#!/bin/bash
+# 01-gam-setup.sh
+# Example: Set up GAM (Google Apps Manager) with credentials from 1Password
+#
+# Copy this file to your private mac-bootstrap-config repo:
+#   mac-bootstrap-config/scripts/01-gam-setup.sh
+#
+# Then customize with your 1Password item ID and vault name.
+
+set -e
+
+echo "Setting up GAM..."
+
+# =============================================================================
+# Configuration - UPDATE THESE VALUES
+# =============================================================================
+
+# Your 1Password item details
+# Find these by running: op item list | grep GAM
+OP_ITEM_ID="your-item-id-here"           # Example: muscfbrgk4qzwophgskjiyjolm
+OP_VAULT="your-vault-name"               # Example: Clawdbot
+
+# GAM installation path
+GAM_DIR="$HOME/bin/gam7"
+GAM_OAUTH_FILE="$GAM_DIR/oauth2.txt"
+
+# =============================================================================
+# Setup Logic
+# =============================================================================
+
+# Check if GAM credentials exist in 1Password
+if ! op item get "$OP_ITEM_ID" --vault "$OP_VAULT" &> /dev/null; then
+    echo "❌ GAM credentials not found in 1Password"
+    echo "   Item ID: $OP_ITEM_ID"
+    echo "   Vault: $OP_VAULT"
+    echo ""
+    echo "To fix this:"
+    echo "  1. Store your GAM oauth2.txt in 1Password as a Document"
+    echo "  2. Update OP_ITEM_ID and OP_VAULT in this script"
+    exit 1
+fi
+
+echo "✓ Found GAM credentials in 1Password"
+
+# Create GAM directory
+if [ ! -d "$GAM_DIR" ]; then
+    echo "⚙ Creating GAM directory at $GAM_DIR..."
+    mkdir -p "$GAM_DIR"
+fi
+
+# Check if GAM binary is present
+if [ ! -f "$GAM_DIR/gam" ]; then
+    echo "⚠ GAM binary not found at $GAM_DIR/gam"
+    echo ""
+    echo "To install GAM:"
+    echo "  1. Download latest release from: https://github.com/GAM-team/GAM/releases"
+    echo "  2. Extract the gam binary to: $GAM_DIR"
+    echo "  3. Make it executable: chmod +x $GAM_DIR/gam"
+    echo ""
+    echo "Continuing without GAM binary (credentials will still be installed)..."
+fi
+
+# Pull OAuth credentials from 1Password
+echo "⚙ Pulling GAM OAuth credentials from 1Password..."
+op document get "$OP_ITEM_ID" --vault "$OP_VAULT" > "$GAM_OAUTH_FILE"
+
+# Set restrictive permissions
+chmod 600 "$GAM_OAUTH_FILE"
+
+echo "✓ GAM OAuth credentials installed to $GAM_OAUTH_FILE"
+echo "✓ Permissions set to 600 (owner read/write only)"
+
+# Add GAM alias to shell config
+SHELL_CONFIG="$HOME/.zshrc"
+GAM_ALIAS="alias gam=\"$GAM_DIR/gam\""
+
+if [ -f "$SHELL_CONFIG" ]; then
+    if ! grep -q "alias gam=" "$SHELL_CONFIG"; then
+        echo "" >> "$SHELL_CONFIG"
+        echo "# GAM alias" >> "$SHELL_CONFIG"
+        echo "$GAM_ALIAS" >> "$SHELL_CONFIG"
+        echo "✓ Added GAM alias to $SHELL_CONFIG"
+    else
+        echo "✓ GAM alias already in $SHELL_CONFIG"
+    fi
+fi
+
+echo ""
+echo "✓ GAM setup complete!"
+echo ""
+echo "Next steps:"
+echo "  • Restart your terminal or run: source ~/.zshrc"
+echo "  • Test GAM: gam version"
+echo "  • Try: gam info user"
