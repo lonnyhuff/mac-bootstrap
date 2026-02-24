@@ -12,8 +12,7 @@
 # - Script reads the headers, copies to destination, strips the headers out
 # - If no private repo, creates minimal defaults (Homebrew path, 1Password SSH agent, basic aliases)
 #
-# Why headers? Because it's easier to manage "where does this file go" in the file itself
-# rather than maintaining a separate mapping. Plus it's self-documenting. You're welcome.
+# Idempotent: only writes files that have changed. Safe to run multiple times.
 
 set -e
 
@@ -25,7 +24,12 @@ PRIVATE_CONFIG_DIR="$HOME/.mac-bootstrap-config"
 if [ "$HAS_PRIVATE_CONFIG" = true ] && [ -d "$PRIVATE_CONFIG_DIR/dotfiles" ]; then
     echo "⚙ Installing dotfiles from private config..."
 
+    installed=0
+    skipped=0
+
     # Parse dotfiles with DEST headers and install them
+    # Note: dotglob is needed to match files starting with . (e.g., .zshrc, .gitconfig)
+    shopt -s dotglob
     for file in "$PRIVATE_CONFIG_DIR/dotfiles"/*; do
         if [ -f "$file" ]; then
             filename=$(basename "$file")
@@ -38,25 +42,38 @@ if [ "$HAS_PRIVATE_CONFIG" = true ] && [ -d "$PRIVATE_CONFIG_DIR/dotfiles" ]; th
                 # Expand ~ to home directory
                 dest="${dest/#\~/$HOME}"
 
-                # Backup existing file if requested
-                if [ "$backup" = "true" ] && [ -f "$dest" ]; then
-                    echo "  Backing up existing $(basename "$dest") to ${dest}.backup"
-                    cp "$dest" "${dest}.backup"
-                fi
-
                 # Create directory if needed
                 mkdir -p "$(dirname "$dest")"
 
-                # Copy file (removing header lines so they don't end up in your actual dotfiles)
-                echo "  Installing $filename → $dest"
-                grep -v "^# BOOTSTRAP_" "$file" > "$dest"
+                # Generate content with headers stripped
+                new_content=$(grep -v "^# BOOTSTRAP_" "$file")
+
+                # Only write if content differs
+                if [ -f "$dest" ] && [ "$(cat "$dest")" = "$new_content" ]; then
+                    skipped=$((skipped + 1))
+                else
+                    # Backup existing file if requested (only on first install)
+                    if [ "$backup" = "true" ] && [ -f "$dest" ] && [ ! -f "${dest}.backup" ]; then
+                        echo "  Backing up existing $(basename "$dest") to ${dest}.backup"
+                        cp "$dest" "${dest}.backup"
+                    fi
+
+                    echo "  Installing $filename → $dest"
+                    echo "$new_content" > "$dest"
+                    installed=$((installed + 1))
+                fi
             else
                 echo "  Skipping $filename (no BOOTSTRAP_DEST header)"
             fi
         fi
     done
 
-    echo "✓ Dotfiles installed from private config"
+    if [ $installed -gt 0 ]; then
+        echo "✓ Installed $installed dotfile(s)"
+    fi
+    if [ $skipped -gt 0 ]; then
+        echo "✓ $skipped dotfile(s) already up to date"
+    fi
 else
     echo "⚠ No private config repo found, using minimal defaults..."
 

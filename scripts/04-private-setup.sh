@@ -8,10 +8,9 @@
 # - Scripts have access to: $HOME, $PRIVATE_CONFIG_DIR, and `op` command (1Password CLI)
 #
 # Example script (01-gam-setup.sh):
-#   OP_ITEM_ID="your-item-id-here"           # This is fine to commit to git
-#   OP_VAULT="your-vault-name"                # So is this
+#   OP_VAULT="your-vault-name"
 #   mkdir -p ~/bin/gam7
-#   op document get "$OP_ITEM_ID" --vault "$OP_VAULT" > ~/bin/gam7/oauth2.txt  # This pulls the ACTUAL secret
+#   op read "op://$OP_VAULT/GAM Credentials/oauth2/txt" > ~/bin/gam7/oauth2.txt
 #   chmod 600 ~/bin/gam7/oauth2.txt
 #
 # "Wait, you're committing 1Password item IDs to git?"

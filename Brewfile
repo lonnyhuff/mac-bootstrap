@@ -10,6 +10,9 @@ brew "awscli"          # AWS CLI
 cask "gcloud-cli"      # Google Cloud SDK
 cask "session-manager-plugin"  # AWS Session Manager
 
+# Networking
+cask "tailscale"       # Mesh VPN
+
 # Development Tools
 brew "node"            # Node.js runtime
 brew "python"          # Python 3
@@ -22,6 +25,7 @@ cask "mitmproxy"       # HTTP(S) proxy for debugging
 
 # Terminal & Shell
 cask "ghostty"         # Terminal emulator
+brew "starship"        # Minimal prompt
 
 # Code Editors & IDEs
 cask "cursor"          # AI-powered code editor

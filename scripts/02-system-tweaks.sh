@@ -181,13 +181,17 @@ echo "✓ Trackpad and mouse configured"
 # Apply Changes
 # =============================================================================
 
-echo "⚙ Restarting affected applications..."
-killall Finder
-killall Dock
-killall SystemUIServer
+# Only restart UI processes on first run (check a known setting as a sentinel)
+CURRENT_DOCK_RECENTS=$(defaults read com.apple.dock show-recents 2>/dev/null || echo "1")
+if [ "$CURRENT_DOCK_RECENTS" != "0" ]; then
+    echo "⚙ Restarting affected applications..."
+    killall Finder 2>/dev/null || true
+    killall Dock 2>/dev/null || true
+    killall SystemUIServer 2>/dev/null || true
+    echo "✓ System tweaks applied (UI refreshed)"
+else
+    echo "✓ System tweaks already applied"
+fi
 
 echo ""
-echo "✓ System tweaks applied!"
-echo ""
 echo "Note: Some changes require a logout/login to take full effect"
-echo "Restart your terminal to see keyboard repeat rate changes"

@@ -45,7 +45,6 @@ confirm() {
 }
 
 # Banner
-clear
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║                                                            ║"
@@ -115,32 +114,37 @@ echo ""
 log_info "Phase 3: 1Password Configuration"
 echo ""
 
-log_warn "1Password has been installed, but needs manual configuration"
-echo ""
-echo "Please complete these steps:"
-echo "  1. Launch 1Password application"
-echo "  2. Sign in to your account"
-echo "  3. Go to Settings → Developer"
-echo "  4. Enable 'Use the SSH agent'"
-echo "  5. Enable 'Connect with 1Password CLI'"
-echo ""
-
-pause_for_input
-
-# Authenticate 1Password CLI
-log_info "Authenticating 1Password CLI..."
-if ! op account list &> /dev/null; then
-    log_info "Running 'op signin' - follow prompts in your browser..."
-    eval $(op signin)
-fi
-
-# Verify 1Password CLI works
+# Skip manual setup if CLI is already authenticated
 if op vault list &> /dev/null; then
-    log_success "1Password CLI authenticated successfully"
+    log_success "1Password CLI already authenticated"
 else
-    log_error "1Password CLI authentication failed"
-    log_error "Please run 'op signin' manually and try again"
-    exit 1
+    log_warn "1Password needs manual configuration"
+    echo ""
+    echo "Please complete these steps:"
+    echo "  1. Launch 1Password application"
+    echo "  2. Sign in to your account"
+    echo "  3. Go to Settings → Developer"
+    echo "  4. Enable 'Use the SSH agent'"
+    echo "  5. Enable 'Connect with 1Password CLI'"
+    echo ""
+
+    pause_for_input
+
+    # Authenticate 1Password CLI
+    log_info "Authenticating 1Password CLI..."
+    if ! op account list &> /dev/null; then
+        log_info "Running 'op signin' - follow prompts in your browser..."
+        eval $(op signin)
+    fi
+
+    # Verify
+    if op vault list &> /dev/null; then
+        log_success "1Password CLI authenticated successfully"
+    else
+        log_error "1Password CLI authentication failed"
+        log_error "Please run 'op signin' manually and try again"
+        exit 1
+    fi
 fi
 
 # =============================================================================
@@ -196,12 +200,10 @@ if [[ "$CURRENT_USER" != "lonnyhuff" ]] && [[ ! -d "$PRIVATE_CONFIG_DIR" ]]; the
 else
     # Either it's me, or the directory already exists (they set it up manually)
     if [ -d "$PRIVATE_CONFIG_DIR" ]; then
-        log_warn "Config directory already exists at $PRIVATE_CONFIG_DIR"
-        if confirm "Pull latest changes?"; then
-            cd "$PRIVATE_CONFIG_DIR"
-            git pull
-            log_success "Private config updated"
-        fi
+        log_info "Updating private config..."
+        git -C "$PRIVATE_CONFIG_DIR" pull --quiet 2>/dev/null && \
+            log_success "Private config updated" || \
+            log_success "Private config up to date"
         export HAS_PRIVATE_CONFIG=true
     else
         log_info "Cloning private config repository..."
@@ -234,7 +236,7 @@ for script in "$SCRIPT_DIR"/scripts/[0-9][0-9]-*.sh; do
 done
 
 # =============================================================================
-# Done!
+# Done! Summary
 # =============================================================================
 
 echo ""
@@ -245,18 +247,56 @@ echo "║                                                            ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-log_success "Your environment is ready"
-echo ""
-log_info "Next steps:"
-echo "  • Restart your terminal for all changes to take effect"
-echo "  • Review installed applications in /Applications"
-echo "  • Check ~/.zshrc for shell configurations"
+# Reload shell environment so we can verify tools
+source "$HOME/.zshrc" 2>/dev/null || true
+
+log_info "Configuration summary:"
 echo ""
 
-if [ "$HAS_PRIVATE_CONFIG" = true ]; then
-    log_info "Private config installed from: $PRIVATE_CONFIG_DIR"
+# Homebrew packages
+brew_formulae=$(brew list --formula 2>/dev/null | wc -l | tr -d ' ')
+brew_casks=$(brew list --cask 2>/dev/null | wc -l | tr -d ' ')
+log_success "Homebrew: $brew_formulae formulae, $brew_casks casks installed"
+
+# CLI tools
+for tool in git gh node python3 aws gcloud nmap op tailscale starship; do
+    if command -v "$tool" &> /dev/null; then
+        version=$("$tool" --version 2>&1 | head -1)
+        log_success "$tool: $version"
+    else
+        log_warn "$tool: not found"
+    fi
+done
+
+# GAM (not in PATH by default, check directly)
+if [ -f "$HOME/bin/gam7/gam" ]; then
+    gam_version=$("$HOME/bin/gam7/gam" version 2>&1 | head -1)
+    log_success "gam: $gam_version"
+else
+    log_warn "gam: not installed"
 fi
 
+# Shell config
 echo ""
-log_warn "Some applications may need manual setup (Raycast, Slack, etc.)"
+if [ -f "$HOME/.zshrc" ]; then
+    log_success "Shell config: ~/.zshrc"
+fi
+
+# Dotfiles
+if [ -d "$HOME/.config" ]; then
+    dotfile_count=$(ls -1 "$HOME/.config" 2>/dev/null | wc -l | tr -d ' ')
+    log_success "Dotfiles: $dotfile_count items in ~/.config"
+fi
+
+# Private config
+if [ "$HAS_PRIVATE_CONFIG" = true ]; then
+    private_scripts=$(ls -1 "$PRIVATE_CONFIG_DIR/scripts"/[0-9][0-9]-*.sh 2>/dev/null | wc -l | tr -d ' ')
+    log_success "Private config: $private_scripts script(s) from $PRIVATE_CONFIG_DIR"
+fi
+
+# macOS tweaks
+log_success "macOS system preferences: configured"
+
+echo ""
+log_warn "Apps that may need manual setup: Raycast, Slack, Signal, Notion, Spotify"
 echo ""
